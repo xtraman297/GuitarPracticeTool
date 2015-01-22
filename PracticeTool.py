@@ -16,7 +16,7 @@ STRINGS_ON_GUITAR = 6
 import sys
 from random import randint, randrange, choice
 from winsound import Beep         # for sound
-import RandomScaleLib
+import RandomScaleLib 
 import sfml as sf
 from time import sleep
 import threading
