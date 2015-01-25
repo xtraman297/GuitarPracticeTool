@@ -62,13 +62,14 @@ def get_scale_return_array(scale_name, tunning_intervals, starting_note):
     scale_list = []
     #here will check for scale_name to change value of scale_pointer
     #scale_pointer = modeslist_to_degree[scale_name]
-    for x in range(0, STRINGS_ON_GUITAR):
+    for x in range(0, 6):
         for y in range(0, 3):
             three_note_list.append(starting_note)
             starting_note += major_array[scale_pointer]
             scale_pointer += 1
             if scale_pointer == 7:
                 scale_pointer = 0
+       # print (tunning_intervals[x])
         starting_note -= tunning_intervals[x]
         scale_list.append(three_note_list[:])  # clone of line
         three_note_list = []

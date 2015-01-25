@@ -17,7 +17,7 @@ import sys
 from random import randint, randrange, choice
 from winsound import Beep         # for sound
 import RandomScaleLib 
-import sfml as sf
+#import sfml as sf
 from time import sleep
 import threading
 from PyQt4 import QtGui, QtCore
@@ -25,9 +25,33 @@ from PyQt4 import QtGui, QtCore
 note_to_number = {'C': 0, 'C#/Db': 1, 'D': 2, 'D#/Eb': 3, 'E': 4, 'F': 5, 'F#/Gb': 6, 'G': 7, 'G#/Ab': 8, 'A': 9, 'A#/Bb': 10, 'B': 11}
 all_notes = ['C', 'C#/DB', 'D', 'D#/EB', 'E', 'F', 'F#/GB', 'G', 'G#/AB', 'A', 'A#/BB', 'B']
 notes_tuning_arr = ["e", "B", "G", "D", "A", "E"]
-
+tuning_interval = []
 key_freq = {'A': 440, 'B': 493, 'C': 523, 'D': 587, 'E': 659, 'F': 698, 'G': 783,
-            'G#/Ab': 830, 'A#/Bb': 466, 'F#/Gb': 739, 'C#/Db': 554, 'D#/Eb': 622}
+            'G#/AB': 830, 'A#/BB': 466, 'F#/GB': 739, 'C#/DB': 554, 'D#/EB': 622}
+glob_first_note = 0
+def tuning_notes_to_intervals(notes_tuning):
+    tuning_interval_internal = []
+    count_intervals = 0
+    tuning_interval_internal.append(5)
+    for i in range(notes_tuning.__len__() - 1):
+        x = all_notes.index(notes_tuning[i].upper())
+        for b in range(all_notes.__len__()):
+            #print x
+            #print notes_tuning[i]
+            #print all_notes[x % len(all_notes)]
+            if notes_tuning[i + 1] == all_notes[x % len(all_notes)].upper():
+                tuning_interval_internal.append(count_intervals)
+            x -= 1
+            count_intervals += 1
+        count_intervals = 0
+    x = 0
+    a_arr = []
+
+    for some in xrange(len(tuning_interval_internal)).__reversed__():
+        #print some
+        a_arr.append(tuning_interval_internal[some])
+    #print a_arr
+    return a_arr
 
 class Example(QtGui.QWidget):
     
@@ -36,10 +60,11 @@ class Example(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-
-        list = (1, 1, 1, 2, 1), (1, 2, 2), (1, 2, 3), (1, 2, 4), (1, 2, 5), (1, 2, 6)
-
-        self.freq = key_freq['A']
+        tuning_interval = tuning_notes_to_intervals(notes_tuning_arr)
+        list = (1, 2, 1), (1, 2, 2), (1, 2, 3), (1, 2, 4), (1, 2, 5), (1, 2, 6)
+        random_note = all_notes[randint(0, 11)]
+        #print random_note
+        self.freq = key_freq[random_note]
 
         self.start_metronome = QtGui.QPushButton('Start', self)
         self.start_metronome.move(10, 10)
@@ -82,10 +107,19 @@ class Example(QtGui.QWidget):
         self.txt.setMinimumWidth(550)
         self.txt.setMaximumHeight(95)
         self.txt.geometry()
-        self.txt.insertPlainText(print_tab_full(get_scale_return_array('D#/EB', 1, 1)))
+        self.txt.insertPlainText(print_tab_full(get_scale_return_array(random_note, 1, 1)))
         self.txt.adjustSize()
 
-        self.setGeometry(750, 700, 570, 310)
+        self.three_notes = QtGui.QTextEdit(self)
+        self.three_notes.move(10,300)
+        self.three_notes.setMinimumWidth(550)
+        self.three_notes.setMaximumHeight(95)
+        self.three_notes.setEnabled(False)
+        some_list = RandomScaleLib.get_scale_return_array("test", tuning_interval, glob_first_note)
+        some_list.reverse()
+        self.three_notes.insertPlainText(print_tab_3_per_string(some_list))
+
+        self.setGeometry(750, 400, 570, 410)
         self.setWindowTitle('Guitar Trainer')
         self.show()
 
@@ -98,9 +132,11 @@ class Example(QtGui.QWidget):
     def clickButton(self):
         if self.hide_scale.moshe:
             self.txt.setStyleSheet('color:#FFF8DC;Background:#FFF8DC;')
+            self.three_notes.setStyleSheet('color:#FFF8DC;Background:#FFF8DC;')
             self.hide_scale.setText('Unhide')
         else:
             self.txt.setStyleSheet('font-family: "Courier New", Courier, monospace;Background:#FFF8DC;')
+            self.three_notes.setStyleSheet('font-family: "Courier New", Courier, monospace;Background:#FFF8DC;')
             self.hide_scale.setText('Hide')
         self.hide_scale.moshe = not self.hide_scale.moshe
 
