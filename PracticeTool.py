@@ -2,33 +2,32 @@
 # -*- coding: utf-8 -*-
 
 """
-ZetCode PyQt4 tutorial 
-
-This example shows text which 
-is entered in a QtGui.QLineEdit
-in a QtGui.QLabel widget.
- 
-author: Jan Bodnar
-website: zetcode.com 
-last edited: August 2011
+Guitar Practice Tool by Moshe Siman-Tov
 """
 STRINGS_ON_GUITAR = 6
 import sys
 from random import randint, randrange, choice
 from winsound import Beep         # for sound
-import RandomScaleLib 
-#import sfml as sf
+import RandomScaleLib
 from time import sleep
 import threading
 from PyQt4 import QtGui, QtCore
 
 note_to_number = {'C': 0, 'C#/Db': 1, 'D': 2, 'D#/Eb': 3, 'E': 4, 'F': 5, 'F#/Gb': 6, 'G': 7, 'G#/Ab': 8, 'A': 9, 'A#/Bb': 10, 'B': 11}
-all_notes = ['C', 'C#/DB', 'D', 'D#/EB', 'E', 'F', 'F#/GB', 'G', 'G#/AB', 'A', 'A#/BB', 'B']
+all_notes = ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B']
 notes_tuning_arr = ["e", "B", "G", "D", "A", "E"]
-tuning_interval = []
+#tuning_interval = []
 key_freq = {'A': 440, 'B': 493, 'C': 523, 'D': 587, 'E': 659, 'F': 698, 'G': 783,
-            'G#/AB': 830, 'A#/BB': 466, 'F#/GB': 739, 'C#/DB': 554, 'D#/EB': 622}
+            'G#/Ab': 830, 'A#/Bb': 466, 'F#/Gb': 739, 'C#/Db': 554, 'D#/Eb': 622}
 glob_first_note = 0
+def get_first_note_and_scale_return_first_note_tab(tab_note, scale_note):
+    tab_note = note_to_number[tab_note]
+    scale_note = note_to_number[scale_note]
+    returned_note = scale_note - tab_note
+    if returned_note < 0:
+        returned_note += 12
+    return returned_note
+
 def tuning_notes_to_intervals(notes_tuning):
     tuning_interval_internal = []
     count_intervals = 0
@@ -36,9 +35,6 @@ def tuning_notes_to_intervals(notes_tuning):
     for i in range(notes_tuning.__len__() - 1):
         x = all_notes.index(notes_tuning[i].upper())
         for b in range(all_notes.__len__()):
-            #print x
-            #print notes_tuning[i]
-            #print all_notes[x % len(all_notes)]
             if notes_tuning[i + 1] == all_notes[x % len(all_notes)].upper():
                 tuning_interval_internal.append(count_intervals)
             x -= 1
@@ -60,45 +56,58 @@ class Example(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        tuning_interval = tuning_notes_to_intervals(notes_tuning_arr)
-        list = (1, 2, 1), (1, 2, 2), (1, 2, 3), (1, 2, 4), (1, 2, 5), (1, 2, 6)
-        random_note = all_notes[randint(0, 11)]
-        #print random_note
-        self.freq = key_freq[random_note]
+        self.tuning_interval = []
+        self.tuning_interval = tuning_notes_to_intervals(notes_tuning_arr)
+        #get self.random_note
+        self.random_note = all_notes[randint(0, 11)]
+        #get the frequency of that note from the note-to-frequency array
+        self.freq = key_freq[self.random_note]
 
-        self.start_metronome = QtGui.QPushButton('Start', self)
-        self.start_metronome.move(10, 10)
-        self.start_metronome.setMinimumSize(100, 100)
-        self.start_metronome.clicked.connect(self.stopStartMetronome)
-        self.start_metronome.started = False
-        self.thread1 = threading.Thread(target=self.print_loop)
-
+        #Here we set all of the buttons and their labels
+        self.start_metronome_button = QtGui.QPushButton('Start', self)
         self.change_scale = QtGui.QPushButton('Change Scale', self)
+        self.num_of_strings = QtGui.QPushButton('Set number of strings', self)
+        self.change_tuning = QtGui.QPushButton('Change Tuning', self)
+        self.change_tabs_mode = QtGui.QPushButton('Change Tabs Mode', self)
+        self.hide_scale = QtGui.QPushButton('UnHide', self)
+
+        #Setting the drop down menu
+        self.modes_list = ["Ionian", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Aeolian", "Locrian"]
+        self.menu = QtGui.QComboBox(self)
+        self.menu.addItems(self.modes_list)
+        self.menu.move(483, 177)
+        #self.menu.connect(self.change_modos, QtCore.pyqtSignal("currentIndexChanged(int)"))
+        self.menu.activated.connect(lambda: self.change_modos())
+        #self.connect(self.menu, QtCore.SIGNAL('activated(QString)'), self.change_modos())
+
+        #Set the metronome start button X,Y location, Size, Function to start 'stopStartMetronome' and if clicked to false
+        self.start_metronome_button.move(10, 10)
+        self.start_metronome_button.setMinimumSize(100, 100)
+        self.start_metronome_button.clicked.connect(self.stopStartMetronome)
+        self.start_metronome_button.started = False
+
+
         self.change_scale.move(120, 10)
         self.change_scale.setMinimumSize(100, 100)
         self.change_scale.clicked.connect(self.stopStartMetronome)
 
-        self.num_of_strings = QtGui.QPushButton('Set number of strings', self)
         self.num_of_strings.move(230, 10)
         self.num_of_strings.setMinimumSize(100, 100)
         self.num_of_strings.clicked.connect(self.stopStartMetronome)
 
-        self.change_tuning = QtGui.QPushButton('Change Tuning', self)
         self.change_tuning.move(350, 10)
         self.change_tuning.setMinimumSize(100, 100)
         self.change_tuning.clicked.connect(self.stopStartMetronome)
 
-        self.change_tabs_mode = QtGui.QPushButton('Change Tabs Mode', self)
         self.change_tabs_mode.move(460, 10)
         self.change_tabs_mode.setMinimumSize(100, 100)
         self.change_tabs_mode.clicked.connect(self.stopStartMetronome)
 
-        self.hide_scale = QtGui.QPushButton('Unhide', self)
         self.hide_scale.move(10, 175)
         self.hide_scale.setMinimumSize(100, 10)
         self.hide_scale.setToolTip('This will hide/unhide the scale')
         self.hide_scale.resize(self.hide_scale.sizeHint())
-        self.hide_scale.clicked.connect(self.clickButton)
+        self.hide_scale.clicked.connect(self.clickHideUnHide)
         self.hide_scale.moshe = True
 
         self.txt = QtGui.QTextEdit(self)
@@ -107,7 +116,7 @@ class Example(QtGui.QWidget):
         self.txt.setMinimumWidth(550)
         self.txt.setMaximumHeight(95)
         self.txt.geometry()
-        self.txt.insertPlainText(print_tab_full(get_scale_return_array(random_note, 1, 1)))
+        self.txt.insertPlainText(print_tab_full(get_scale_return_array(self.random_note, 1, 1)))
         self.txt.adjustSize()
 
         self.three_notes = QtGui.QTextEdit(self)
@@ -115,7 +124,7 @@ class Example(QtGui.QWidget):
         self.three_notes.setMinimumWidth(550)
         self.three_notes.setMaximumHeight(95)
         self.three_notes.setEnabled(False)
-        some_list = RandomScaleLib.get_scale_return_array("test", tuning_interval, glob_first_note)
+        some_list = RandomScaleLib.get_scale_return_array("test", self.tuning_interval, get_first_note_and_scale_return_first_note_tab('E', self.random_note), self.menu.currentIndex())
         some_list.reverse()
         self.three_notes.insertPlainText(print_tab_3_per_string(some_list))
 
@@ -123,17 +132,18 @@ class Example(QtGui.QWidget):
         self.setWindowTitle('Guitar Trainer')
         self.show()
 
-        self.clickButton()
+        self.thread1 = threading.Thread(target=self.print_loop)
+        self.clickHideUnHide()
         get_scale_return_array('E', 1, 1)
 
     def onChanged(self, text):
         self.txt.setText(text)
 
-    def clickButton(self):
+    def clickHideUnHide(self):
         if self.hide_scale.moshe:
             self.txt.setStyleSheet('color:#FFF8DC;Background:#FFF8DC;')
             self.three_notes.setStyleSheet('color:#FFF8DC;Background:#FFF8DC;')
-            self.hide_scale.setText('Unhide')
+            self.hide_scale.setText('UnHide')
         else:
             self.txt.setStyleSheet('font-family: "Courier New", Courier, monospace;Background:#FFF8DC;')
             self.three_notes.setStyleSheet('font-family: "Courier New", Courier, monospace;Background:#FFF8DC;')
@@ -142,24 +152,44 @@ class Example(QtGui.QWidget):
 
     def stopStartMetronome(self):
 
-        if self.start_metronome.started:
-            self.start_metronome.setStyleSheet("background-color: light gray")
-            self.start_metronome.setText('start')
-            self.start_metronome.started = False
+        if self.start_metronome_button.started:
+            self.start_metronome_button.setStyleSheet("background-color: light gray")
+            self.start_metronome_button.setText('start')
+            self.start_metronome_button.started = False
         else:
-            self.start_metronome.setStyleSheet("background-color: red")
-            self.start_metronome.setText('stop')
-            self.start_metronome.started = True
+            self.start_metronome_button.setStyleSheet("background-color: red")
+            self.start_metronome_button.setText('stop')
+            self.start_metronome_button.started = True
+
+            #Change Scale Randomly
+            self.random_note = all_notes[randint(0, 11)]
+            #get the frequency of that note from the note-to-frequency array
+            self.freq = key_freq[self.random_note]
+            some_list = RandomScaleLib.get_scale_return_array("test", self.tuning_interval, get_first_note_and_scale_return_first_note_tab('E', self.random_note), self.menu.currentIndex())            #some_list.reverse()
+            some_list.reverse()
+            self.three_notes.setText("")
+            self.three_notes.insertPlainText(print_tab_3_per_string(some_list))
+            self.txt.setText("")
+            self.txt.insertPlainText(print_tab_full(get_scale_return_array(self.random_note, 1, 1)))
+
+            #Start Metronome Loop
             self.thread1 = threading.Thread(target=self.print_loop)
             self.thread1.start()
-            #print 1
+
+    def change_modos(self):
+        #print self.menu.currentIndex()
+
+        some_list = RandomScaleLib.get_scale_return_array("test", self.tuning_interval, get_first_note_and_scale_return_first_note_tab('E', self.random_note), self.menu.currentIndex())            #some_list.reverse()
+        some_list.reverse()
+        self.three_notes.setText("")
+        self.three_notes.insertPlainText(print_tab_3_per_string(some_list))
 
     def print_loop(self):
         local_count = 0
         weight = randint(4, 4)
 
         tempo = (float(randint(25, 100)) * 0.01)
-        while self.start_metronome.started:
+        while self.start_metronome_button.started:
             #print (str(local_count + 1), end='')
             local_count = (local_count + 1) % weight
             if local_count == 1:

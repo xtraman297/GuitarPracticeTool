@@ -54,12 +54,21 @@ def list_upside_down(list):
         tmp_list[len(list) - i] = list[i]
     return tmp_list
 
-def get_scale_return_array(scale_name, tunning_intervals, starting_note):
+def get_scale_return_array(scale_name, tunning_intervals, starting_note, scale_pointer):
     major_array = [2, 2, 1, 2, 2, 2, 1]
     #scale_pointer = 0 is default for major scale
-    scale_pointer = 0
+    #scale_pointer = 0
     three_note_list = []
     scale_list = []
+    if scale_pointer > 6 or scale_pointer < 0:
+        scale_pointer = 0
+    else:
+        for i in range(0, scale_pointer):
+            starting_note = starting_note + major_array[i]
+    if starting_note > 11:
+        starting_note -= 12
+    print (starting_note)
+
     #here will check for scale_name to change value of scale_pointer
     #scale_pointer = modeslist_to_degree[scale_name]
     for x in range(0, 6):
